@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>드래그 한글 키보드</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: white;
+      font-family: sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #output {
+      margin: 1rem;
+      padding: 1rem;
+      width: 90%;
+      min-height: 3rem;
+      background: #222;
+      border-radius: 0.5rem;
+      font-size: 1.5rem;
+    }
+    .keyboard {
+      display: grid;
+      gap: 0.4rem;
+      padding: 1rem;
+      grid-template-columns: repeat(4, 3.5rem);
+    }
+    .key {
+      background: #333;
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      padding: 1rem;
+      border-radius: 0.5rem;
+      touch-action: none;
+    }
+    .row-2 {
+      grid-column: span 3 / span 3;
+      justify-self: center;
+    }
+    .row-3 {
+      grid-column: span 4;
+    }
+  </style>
+</head>
+<body>
+  <div id="output" contenteditable="true"></div>
+  <div class="keyboard">
+    <button class="key" data-key="ㄱ">ㄱ</button>
+    <button class="key" data-key="ㄴ">ㄴ</button>
+    <button class="key" data-key="ㄷ">ㄷ</button>
+    <button class="key" data-key="ㅂ">ㅂ</button>
+
+    <button class="key" data-key="ㅅ">ㅅ</button>
+    <button class="key" data-key="ㅇ">ㅇ</button>
+    <button class="key" data-key="ㅈ">ㅈ</button>
+    <button class="key" data-key="?">.,?!</button>
+
+    <button class="key" data-key="•">•</button>
+    <button class="key" data-key="ㅣ">ㅣ</button>
+    <button class="key" data-key="ㅡ">ㅡ</button>
+    <button class="key" data-key="한자">한자</button>
+
+    <button class="key" data-key="⌫">⌫</button>
+    <button class="key" data-key="␣">␣</button>
+    <button class="key" data-key="⏎">⏎</button>
+  </div>
+  <script>
+    const output = document.getElementById('output');
+    const keys = document.querySelectorAll('.key');
+
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let currentKey = null;
+
+    keys.forEach(key => {
+      key.addEventListener('pointerdown', e => {
+        currentKey = key;
+        dragStartX = e.clientX;
+        dragStartY = e.clientY;
+        key.setPointerCapture(e.pointerId);
+      });
+
+      key.addEventListener('pointerup', e => {
+        const dx = e.clientX - dragStartX;
+        const dy = e.clientY - dragStartY;
+        const direction = getDirection(dx, dy);
+        const value = resolveKey(key.dataset.key, direction);
+        if (value) {
+          if (value === '⌫') output.textContent = output.textContent.slice(0, -1);
+          else if (value === '␣') output.textContent += ' ';
+          else if (value === '⏎') output.textContent += '\n';
+          else output.textContent += value;
+        }
+        currentKey = null;
+      });
+    });
+
+    function getDirection(dx, dy) {
+      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return 'tap';
+      if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+      return dy > 0 ? 'down' : 'up';
+    }
+
+    function resolveKey(key, dir) {
+      const map = {
+        'ㄱ': { left: 'ㄲ', right: 'ㅋ', tap: 'ㄱ' },
+        'ㄴ': { left: 'ㅁ', right: 'ㄹ', tap: 'ㄴ' },
+        'ㄷ': { left: 'ㄸ', right: 'ㅌ', tap: 'ㄷ' },
+        'ㅂ': { left: 'ㅃ', right: 'ㅍ', tap: 'ㅂ' },
+        'ㅅ': { left: 'ㅆ', tap: 'ㅅ' },
+        'ㅈ': { left: 'ㅉ', right: 'ㅊ', tap: 'ㅈ' },
+        'ㅇ': { right: 'ㅎ', tap: 'ㅇ' },
+
+        'ㅣ': { left: 'ㅓ', right: 'ㅏ', tap: 'ㅣ' },
+        'ㅡ': { left: 'ㅜ', right: 'ㅗ', tap: 'ㅡ' },
+
+        '⌫': { tap: '⌫' },
+        '␣': { tap: '␣' },
+        '⏎': { tap: '⏎' },
+
+        '•': { tap: '•' },
+        '한자': { tap: '漢' },
+
+        '?': { left: ',', tap: '.', right: '!' },
+      };
+      return map[key]?.[dir] || null;
+    }
+  </script>
+</body>
+</html>
