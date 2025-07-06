@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="ko">
+<!DOCTYPE html><html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -54,83 +53,126 @@
     <button class="key" data-key="ㄱ">ㄱ</button>
     <button class="key" data-key="ㄴ">ㄴ</button>
     <button class="key" data-key="ㄷ">ㄷ</button>
-    <button class="key" data-key="ㅂ">ㅂ</button>
+    <button class="key" data-key="ㅂ">ㅂ</button><button class="key" data-key="ㅅ">ㅅ</button>
+<button class="key" data-key="ㅇ">ㅇ</button>
+<button class="key" data-key="ㅈ">ㅈ</button>
+<button class="key" data-key="?">.,?!</button>
 
-    <button class="key" data-key="ㅅ">ㅅ</button>
-    <button class="key" data-key="ㅇ">ㅇ</button>
-    <button class="key" data-key="ㅈ">ㅈ</button>
-    <button class="key" data-key="?">.,?!</button>
+<button class="key" data-key="•">•</button>
+<button class="key" data-key="ㅣ">ㅣ</button>
+<button class="key" data-key="ㅡ">ㅡ</button>
+<button class="key" data-key="한자">한자</button>
 
-    <button class="key" data-key="•">•</button>
-    <button class="key" data-key="ㅣ">ㅣ</button>
-    <button class="key" data-key="ㅡ">ㅡ</button>
-    <button class="key" data-key="한자">漢</button>
+<button class="key" data-key="⌫">⌫</button>
+<button class="key" data-key="␣">␣</button>
+<button class="key" data-key="⏎">⏎</button>
 
-    <button class="key" data-key="⌫">⌫</button>
-    <button class="key" data-key="␣">␣</button>
-    <button class="key" data-key="⏎">⏎</button>
   </div>
   <script>
     const output = document.getElementById('output');
-    const keys = document.querySelectorAll('.key');
+    const keys = document.querySelectorAll('.key');let dragStartX = 0;
+let dragStartY = 0;
+let currentKey = null;
 
-    let dragStartX = 0;
-    let dragStartY = 0;
-    let currentKey = null;
+// 한글 조합 상태
+let chosung = '';
+let jungsung = '';
+let jongsung = '';
 
-    keys.forEach(key => {
-      key.addEventListener('pointerdown', e => {
-        currentKey = key;
-        dragStartX = e.clientX;
-        dragStartY = e.clientY;
-        key.setPointerCapture(e.pointerId);
-      });
+const CHOSUNG_LIST = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+const JUNGSUNG_LIST = 'ㅏㅐㅑㅒㅓㅔㅕㅖㅗㅘㅙㅚㅛㅜㅝㅞㅟㅠㅡㅢㅣ';
+const JONGSUNG_LIST = ['', 'ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 
-      key.addEventListener('pointerup', e => {
-        const dx = e.clientX - dragStartX;
-        const dy = e.clientY - dragStartY;
-        const direction = getDirection(dx, dy);
-        const value = resolveKey(key.dataset.key, direction);
-        if (value) {
-          if (value === '⌫') output.textContent = output.textContent.slice(0, -1);
-          else if (value === '␣') output.textContent += ' ';
-          else if (value === '⏎') output.textContent += '\n';
-          else output.textContent += value;
-        }
-        currentKey = null;
-      });
-    });
+function flushBuffer() {
+  if (chosung && jungsung) {
+    const c = CHOSUNG_LIST.indexOf(chosung);
+    const j = JUNGSUNG_LIST.indexOf(jungsung);
+    const t = JONGSUNG_LIST.indexOf(jongsung);
+    const code = 0xAC00 + (c * 21 * 28) + (j * 28) + (t >= 0 ? t : 0);
+    output.textContent += String.fromCharCode(code);
+  } else {
+    output.textContent += chosung || jungsung || jongsung;
+  }
+  chosung = '';
+  jungsung = '';
+  jongsung = '';
+}
 
-    function getDirection(dx, dy) {
-      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return 'tap';
-      if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
-      return dy > 0 ? 'down' : 'up';
-    }
+keys.forEach(key => {
+  key.addEventListener('pointerdown', e => {
+    currentKey = key;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    key.setPointerCapture(e.pointerId);
+  });
 
-    function resolveKey(key, dir) {
-      const map = {
-        'ㄱ': { left: 'ㄲ', right: 'ㅋ', tap: 'ㄱ' },
-        'ㄴ': { left: 'ㅁ', right: 'ㄹ', tap: 'ㄴ' },
-        'ㄷ': { left: 'ㄸ', right: 'ㅌ', tap: 'ㄷ' },
-        'ㅂ': { left: 'ㅃ', right: 'ㅍ', tap: 'ㅂ' },
-        'ㅅ': { left: 'ㅆ', tap: 'ㅅ' },
-        'ㅈ': { left: 'ㅉ', right: 'ㅊ', tap: 'ㅈ' },
-        'ㅇ': { right: 'ㅎ', tap: 'ㅇ' },
+  key.addEventListener('pointerup', e => {
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    const direction = getDirection(dx, dy);
+    const value = resolveKey(key.dataset.key, direction);
 
-        'ㅣ': { left: 'ㅓ', right: 'ㅏ', tap: 'ㅣ' },
-        'ㅡ': { left: 'ㅜ', right: 'ㅗ', tap: 'ㅡ' },
+    if (value) handleInput(value);
 
-        '⌫': { tap: '⌫' },
-        '␣': { tap: '␣' },
-        '⏎': { tap: '⏎' },
+    currentKey = null;
+  });
+});
 
-        '•': { tap: '•' },
-        '한자': { tap: '漢' },
+function getDirection(dx, dy) {
+  if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return 'tap';
+  if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? 'right' : 'left';
+  return dy > 0 ? 'down' : 'up';
+}
 
-        '?': { left: ',', tap: '.', right: '!' },
-      };
-      return map[key]?.[dir] || null;
-    }
+function resolveKey(key, dir) {
+  const map = {
+    'ㄱ': { left: 'ㄲ', right: 'ㅋ', tap: 'ㄱ' },
+    'ㄴ': { left: 'ㅁ', right: 'ㄹ', tap: 'ㄴ' },
+    'ㄷ': { left: 'ㄸ', right: 'ㅌ', tap: 'ㄷ' },
+    'ㅂ': { left: 'ㅃ', right: 'ㅍ', tap: 'ㅂ' },
+    'ㅅ': { left: 'ㅆ', tap: 'ㅅ' },
+    'ㅈ': { left: 'ㅉ', right: 'ㅊ', tap: 'ㅈ' },
+    'ㅇ': { right: 'ㅎ', tap: 'ㅇ' },
+
+    'ㅣ': { left: 'ㅓ', right: 'ㅏ', tap: 'ㅣ' },
+    'ㅡ': { left: 'ㅜ', right: 'ㅗ', tap: 'ㅡ' },
+
+    '⌫': { tap: '⌫' },
+    '␣': { tap: '␣' },
+    '⏎': { tap: '⏎' },
+
+    '•': { tap: '•' },
+    '한자': { tap: '漢' },
+
+    '?': { left: ',', tap: '.', right: '!' },
+  };
+  return map[key]?.[dir] || null;
+}
+
+function handleInput(char) {
+  if (char === '⌫') {
+    output.textContent = output.textContent.slice(0, -1);
+    return;
+  }
+  if (char === '␣' || char === '⏎') {
+    flushBuffer();
+    output.textContent += (char === '␣' ? ' ' : '\n');
+    return;
+  }
+
+  if (CHOSUNG_LIST.includes(char)) {
+    if (!chosung) chosung = char;
+    else if (chosung && jungsung && !jongsung) jongsung = char;
+    else flushBuffer(), chosung = char;
+  } else if (JUNGSUNG_LIST.includes(char)) {
+    if (!chosung) flushBuffer(), jungsung = char;
+    else jungsung = char;
+  } else {
+    flushBuffer();
+    output.textContent += char;
+  }
+}
+
   </script>
 </body>
 </html>
