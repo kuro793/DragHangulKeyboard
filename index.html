@@ -98,6 +98,19 @@ function flushBuffer() {
   jongsung = '';
 }
 
+function renderPreview() {
+  const base = output.textContent.replace(/[가-힣]$/, '');
+  if (chosung && jungsung) {
+    const c = CHOSUNG_LIST.indexOf(chosung);
+    const j = JUNGSUNG_LIST.indexOf(jungsung);
+    const t = JONGSUNG_LIST.indexOf(jongsung);
+    const code = 0xAC00 + (c * 21 * 28) + (j * 28) + (t >= 0 ? t : 0);
+    output.textContent = base + String.fromCharCode(code);
+  } else {
+    output.textContent = base + (chosung || jungsung || jongsung);
+  }
+}
+
 keys.forEach(key => {
   key.addEventListener('pointerdown', e => {
     currentKey = key;
@@ -152,6 +165,7 @@ function resolveKey(key, dir) {
 function handleInput(char) {
   if (char === '⌫') {
     output.textContent = output.textContent.slice(0, -1);
+    chosung = jungsung = jongsung = '';
     return;
   }
   if (char === '␣' || char === '⏎') {
@@ -171,6 +185,7 @@ function handleInput(char) {
     flushBuffer();
     output.textContent += char;
   }
+  renderPreview();
 }
 
   </script>
